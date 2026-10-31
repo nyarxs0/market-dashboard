@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Market Dashboard</title>
+<style>
+:root{--bg:#0b0f17;--card:#121826;--line:#1f2937;--txt:#e5e7eb;--mut:#94a3b8;--acc:#f5b301;--up:#22c55e;--dn:#ef4444}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+h1{font-size:18px;margin:0}h1 span{color:var(--acc)}
+#clock{color:var(--mut);font-size:13px}
+main{max-width:1200px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.card h2{font-size:14px;margin:0 0 10px;color:var(--acc);text-transform:uppercase;letter-spacing:.05em}
+.full{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mut);font-weight:500}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.note{color:var(--mut);font-size:12px;margin-top:8px}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:16px}
+@media(max-width:800px){main{grid-template-columns:1fr;padding:10px}}
+</style>
+</head>
+<body>
+<header>
+<h1>Market <span>Dashboard</span></h1>
+<div id="clock"></div>
+</header>
+<div id="tape"></div>
+<main>
+<section class="card full">
+<h2>Crypto Top 10</h2>
+<table>
+<thead><tr><th>Coin</th><th>Harga (USD)</th><th>24j</th></tr></thead>
+<tbody id="crypto"><tr><td colspan="3">Memuat data...</td></tr></tbody>
+</table>
+<div class="note" id="cnote"></div>
+</section>
+<section class="card">
+<h2>Kalender Ekonomi</h2>
+<div id="cal"></div>
+</section>
+<section class="card">
+<h2>Berita Forex</h2>
+<div id="news"></div>
+</section>
+</main>
+<footer>Data: TradingView widgets &amp; CoinGecko. Hanya untuk edukasi, bukan saran investasi.</footer>
+<script>
+function widget(id,file,cfg){var s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/embed-widget-'+file+'.js';s.async=true;s.text=JSON.stringify(cfg);document.getElementById(id).appendChild(s)}
+widget('tape','ticker-tape',{symbols:[{proName:'OANDA:XAUUSD',title:'Gold'},{proName:'FX:EURUSD',title:'EUR/USD'},{proName:'FX:USDJPY',title:'USD/JPY'},{proName:'TVC:DXY',title:'DXY'},{proName:'BITSTAMP:BTCUSD',title:'BTC'},{proName:'FOREXCOM:SPXUSD',title:'S&P 500'}],colorTheme:'dark',isTransparent:true,displayMode:'adaptive',locale:'en'});
+widget('cal','events',{colorTheme:'dark',isTransparent:true,width:'100%',height:'600',locale:'en',importanceFilter:'-1,0,1',currencyFilter:'USD,EUR,JPY,GBP,AUD,CAD,CHF'});
+widget('news','timeline',{feedMode:'market',market:'forex',colorTheme:'dark',isTransparent:true,displayMode:'regular',width:'100%',height:'600',locale:'en'});
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleString('id-ID',{timeZone:'Asia/Tokyo',dateStyle:'medium',timeStyle:'medium'})+' JST'}
+tick();setInterval(tick,1000);
+async function crypto(){
+var b=document.getElementById('crypto'),n=document.getElementById('cnote');
+try{
+var r=await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&price_change_percentage=24h');
+if(!r.ok)throw new Error(r.status);
+var d=await r.json();
+b.innerHTML=d.map(function(c){var p=c.price_change_percentage_24h||0;return '<tr><td>'+c.name+' <small>'+c.symbol.toUpperCase()+'</small></td><td>'+c.current_price.toLocaleString('en-US')+'</td><td class="'+(p>=0?'up':'dn')+'">'+(p>=0?'+':'')+p.toFixed(2)+'%</td></tr>'}).join('');
+n.textContent='Diperbarui: '+new Date().toLocaleTimeString('id-ID',{timeZone:'Asia/Tokyo'})+' JST (CoinGecko, bisa delayed)';
+}catch(e){b.innerHTML='<tr><td colspan="3">Data real-time tidak tersedia. Coba refresh nanti.</td></tr>'}
+}
+crypto();setInterval(crypto,60000);
+</script>
+</body>
+</html>
